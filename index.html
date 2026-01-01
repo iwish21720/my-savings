@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌸 365存錢日誌</title>
     
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584052.png">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/584/584052.png">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584052.png">
+
+<meta name="mobile-web-app-capable" content="yes">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -85,66 +89,87 @@
     <div class="grid-container" id="grid"></div>
 
     <script>
-        const grid = document.getElementById('grid');
-        const progressFill = document.getElementById('progressFill');
-        const currentAmountDisplay = document.getElementById('currentAmount');
-        const percentDisplay = document.getElementById('percent');
-        const completedDaysDisplay = document.getElementById('completedDays');
+    const grid = document.getElementById('grid');
+    const progressFill = document.getElementById('progressFill');
+    const currentAmountDisplay = document.getElementById('currentAmount');
+    const percentDisplay = document.getElementById('percent');
+    const completedDaysDisplay = document.getElementById('completedDays');
+
+    // 建立 365 個格子
+    for (let i = 1; i <= 365; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.innerText = i;
+        cell.onclick = () => toggleSelect(cell, i);
+        grid.appendChild(cell);
+    }
+
+    // 點擊格子的邏輯
+    function toggleSelect(element, day) {
+        element.classList.toggle('selected');
+        updateProgress();
+        saveData();
+
+        // --- 華麗彩帶特效邏輯 ---
+        const allCells = document.querySelectorAll('.cell');
+        const selectedCells = document.querySelectorAll('.cell.selected');
         
-        // 讀取資料：現在儲存的是物件 {day: 1, date: '2023/10/27'}
-        let savedRecords = JSON.parse(localStorage.getItem('savings_pro_365')) || [];
+        if (selectedCells.length === 1) {
+            // 噴出第一波中央彩帶
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#ffb7c5', '#ffffff', '#ff69b4']
+            });
 
-        function init() {
-            for (let day = 1; day <= 365; day++) {
-                const amount = day * 2;
-                const record = savedRecords.find(r => r.day === day);
-                
-                const card = document.createElement('div');
-                card.className = 'day-card' + (record ? ' completed' : '');
-                
-                card.innerHTML = `
-                    <span class="day-num">${day}</span>
-                    <span class="amount">$${amount}</span>
-                    <div class="date-label">${record ? record.date : ''}</div>
-                `;
+            // 持續 3 秒的左右噴泉
+            var duration = 3 * 1000;
+            var end = Date.now() + duration;
 
-                card.onclick = () => toggleDay(day, card);
-                grid.appendChild(card);
-            }
-            updateStats();
+            (function frame() {
+                confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ffb7c5', '#ff69b4'] });
+                confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ffb7c5', '#ff69b4'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+
+            setTimeout(() => {
+                alert("🎊 恭喜達成 365x2 儲蓄目標！\n\n你已經成功存下了 $133,590 元！\n你真的太棒了！🌸");
+            }, 1500);
         }
+    }
 
-        function toggleDay(day, element) {
-            const index = savedRecords.findIndex(r => r.day === day);
-            
-            if (index > -1) {
-                if(confirm("確定要取消這一天的紀錄嗎？")) {
-                    savedRecords.splice(index, 1);
-                    element.classList.remove('completed');
-                }
-            } else {
-                const now = new Date();
-                const dateStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes()}`;
-                savedRecords.push({ day: day, date: dateStr });
-                element.classList.add('completed');
-                element.querySelector('.date-label').innerText = dateStr;
-            }
-            
-            localStorage.setItem('savings_pro_365', JSON.stringify(savedRecords));
-            updateStats();
+    // 更新進度條與金額
+    function updateProgress() {
+        const selectedCells = document.querySelectorAll('.cell.selected');
+        const count = selectedCells.length;
+        const totalAmount = count * (count + 1); // 這是 365x2 的簡易公式：(1+2...+n)*2
+        
+        const progressPercent = (count / 365) * 100;
+        progressFill.style.width = progressPercent + '%';
+        
+        currentAmountDisplay.innerText = totalAmount.toLocaleString();
+        percentDisplay.innerText = Math.round(progressPercent);
+        completedDaysDisplay.innerText = count;
+    }
+
+    // 儲存資料
+    function saveData() {
+        const selectedIndices = Array.from(document.querySelectorAll('.cell')).map((cell, index) => cell.classList.contains('selected') ? index : null).filter(i => i !== null);
+        localStorage.setItem('savedProgress_365x2', JSON.stringify(selectedIndices));
+    }
+
+    // 讀取資料
+    function loadData() {
+        const saved = JSON.parse(localStorage.getItem('savedProgress_365x2'));
+        if (saved) {
+            const cells = document.querySelectorAll('.cell');
+            saved.forEach(index => cells[index].classList.add('selected'));
+            updateProgress();
         }
+    }
 
-        function updateStats() {
-            const currentTotal = savedRecords.reduce((sum, r) => sum + (r.day * 2), 0);
-            const percentage = ((currentTotal / 133590) * 100).toFixed(1);
-            
-            currentAmountDisplay.innerText = `$${currentTotal.toLocaleString()}`;
-            percentDisplay.innerText = `${percentage}%`;
-            progressFill.style.width = `${percentage}%`;
-            completedDaysDisplay.innerText = savedRecords.length;
-        }
-
-        init();
-    </script>
+    window.onload = loadData;
+</script>
 </body>
 </html>
