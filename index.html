@@ -1,21 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌸 365存錢日誌</title>
+    <title>🌸 365日儲蓄挑戰</title>
     
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584052.png">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/584/584052.png">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584052.png">
-
-<meta name="mobile-web-app-capable" content="yes">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="365存錢日誌">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         :root {
             --primary-pink: #ffb7c5;
@@ -48,7 +44,8 @@
         }
 
         .grid-container {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
             gap: 12px; width: 100%; max-width: 900px;
         }
 
@@ -63,11 +60,12 @@
         }
 
         .date-label {
-            display: none; font-size: 9px; margin-top: 5px;
+            font-size: 9px; margin-top: 5px;
             background: rgba(255,255,255,0.2); border-radius: 5px;
+            display: none; /* 預設隱藏 */
         }
 
-        .completed .date-label { display: block; }
+        .day-card.completed .date-label { display: block; } /* 完成後才顯示 */
 
         .day-num { font-weight: bold; display: block; font-size: 16px; }
         .amount { font-size: 13px; opacity: 0.9; }
@@ -76,8 +74,8 @@
 <body>
 
     <div class="header">
-        <h1>🌸 365天挑戰</h1>
-        <p>無痛存13萬我來啦~~~</p>
+        <h1>🌸 365日儲蓄挑戰</h1>
+        <p>無痛存13萬我來啦～～～</p>
     </div>
 
     <div class="stats-container">
@@ -88,86 +86,78 @@
 
     <div class="grid-container" id="grid"></div>
 
-   <script>
-    const grid = document.getElementById('grid');
-    const progressFill = document.getElementById('progressFill');
-    const currentAmountDisplay = document.getElementById('currentAmount');
-    const percentDisplay = document.getElementById('percent');
-    const completedDaysDisplay = document.getElementById('completedDays');
-
-    // 讀取資料：儲存格式為 [{day: 1, date: '1/1 12:00'}, ...]
-    let savedRecords = JSON.parse(localStorage.getItem('savings_pro_365')) || [];
-
-    // 初始化 365 個格子
-    function init() {
-        grid.innerHTML = ''; // 清空重新產生
-        for (let day = 1; day <= 365; day++) {
-            const amount = day * 2;
-            const record = savedRecords.find(r => r.day === day);
-            
-            const card = document.createElement('div');
-            card.className = 'day-card' + (record ? ' completed' : ''); // 使用你原本的 class 名稱
-            
-            card.innerHTML = `
-                <span class="day-num">${day}</span>
-                <span class="amount">$${amount}</span>
-                <div class="date-label" style="${record ? 'display:block' : 'display:none'}">${record ? record.date : ''}</div>
-            `;
-
-            card.onclick = () => toggleDay(day, card);
-            grid.appendChild(card);
-        }
-        updateStats();
-    }
-
-    // 點擊格子的邏輯
-    function toggleDay(day, element) {
-        const index = savedRecords.findIndex(r => r.day === day);
+    <script>
+        const grid = document.getElementById('grid');
+        const progressFill = document.getElementById('progressFill');
+        const currentAmountDisplay = document.getElementById('currentAmount');
+        const percentDisplay = document.getElementById('percent');
+        const completedDaysDisplay = document.getElementById('completedDays');
         
-        if (index > -1) {
-            if(confirm("確定要取消這一天的紀錄嗎？")) {
-                savedRecords.splice(index, 1);
-                element.classList.remove('completed');
-                element.querySelector('.date-label').style.display = 'none';
+        // 確保讀取資料名稱一致
+        let savedRecords = JSON.parse(localStorage.getItem('savings_pro_365')) || [];
+
+        function init() {
+            grid.innerHTML = ''; 
+            for (let day = 1; day <= 365; day++) {
+                const amount = day * 2;
+                const record = savedRecords.find(r => r.day === day);
+                
+                const card = document.createElement('div');
+                card.className = 'day-card' + (record ? ' completed' : '');
+                
+                card.innerHTML = `
+                    <span class="day-num">${day}</span>
+                    <span class="amount">$${amount}</span>
+                    <div class="date-label">${record ? record.date : ''}</div>
+                `;
+
+                card.onclick = () => toggleDay(day, card);
+                grid.appendChild(card);
             }
-        } else {
-            const now = new Date();
-            const dateStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes()}`;
-            savedRecords.push({ day: day, date: dateStr });
-            element.classList.add('completed');
-            const label = element.querySelector('.date-label');
-            label.innerText = dateStr;
-            label.style.display = 'block';
-            
-            // 檢查是否全部完成，觸發彩帶
-            checkCompletion();
+            updateStats();
         }
-        
-        localStorage.setItem('savings_pro_365', JSON.stringify(savedRecords));
-        updateStats();
-    }
 
-    // 更新進度與金額
-    function updateStats() {
-        const currentTotal = savedRecords.reduce((sum, r) => sum + (r.day * 2), 0);
-        const count = savedRecords.length;
-        const percentage = ((currentTotal / 133590) * 100).toFixed(1);
-        
-        currentAmountDisplay.innerText = `$${currentTotal.toLocaleString()}`;
-        percentDisplay.innerText = `${percentage}%`;
-        progressFill.style.width = `${percentage}%`;
-        completedDaysDisplay.innerText = count;
-    }
+        function toggleDay(day, element) {
+            const index = savedRecords.findIndex(r => r.day === day);
+            
+            if (index > -1) {
+                if(confirm("確定要取消這一天的紀錄嗎？")) {
+                    savedRecords.splice(index, 1);
+                    element.classList.remove('completed');
+                }
+            } else {
+                const now = new Date();
+                const dateStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes()}`;
+                savedRecords.push({ day: day, date: dateStr });
+                element.classList.add('completed');
+                element.querySelector('.date-label').innerText = dateStr;
+                
+                // 檢查是否全滿觸發彩帶
+                if (savedRecords.length === 365) {
+                    launchConfetti();
+                }
+            }
+            
+            localStorage.setItem('savings_pro_365', JSON.stringify(savedRecords));
+            updateStats();
+        }
 
-    // 彩帶特效邏輯
-    function checkCompletion() {
-        if (savedRecords.length === 365) {
-            // 噴發彩帶
+        function updateStats() {
+            const currentTotal = savedRecords.reduce((sum, r) => sum + (r.day * 2), 0);
+            const count = savedRecords.length;
+            const percentage = ((currentTotal / 133590) * 100).toFixed(1);
+            
+            currentAmountDisplay.innerText = `$${currentTotal.toLocaleString()}`;
+            percentDisplay.innerText = `${percentage}%`;
+            progressFill.style.width = `${percentage}%`;
+            completedDaysDisplay.innerText = count;
+        }
+
+        function launchConfetti() {
             confetti({
                 particleCount: 150, spread: 70, origin: { y: 0.6 },
                 colors: ['#ffb7c5', '#ffffff', '#ff69b4']
             });
-
             var duration = 3 * 1000;
             var end = Date.now() + duration;
             (function frame() {
@@ -175,14 +165,12 @@
                 confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ffb7c5', '#ff69b4'] });
                 if (Date.now() < end) requestAnimationFrame(frame);
             }());
-
             setTimeout(() => {
-                alert("🎊 恭喜達成 365x2 儲蓄目標！\n\n你已經成功存下了 $133,590 元！\n你真的太棒了！🌸");
+                alert("🎊 恭喜達成 365日儲蓄挑戰！\n\n你超棒！已經成功存下了 $133,590 元！🌸");
             }, 1500);
         }
-    }
 
-    init();
-</script>
+        init();
+    </script>
 </body>
 </html>
