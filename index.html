@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌸 365日儲蓄挑戰</title>
     
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584052.png">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/584/584052.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584052.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
@@ -43,6 +43,7 @@
             height: 100%; width: 0%; transition: width 0.5s ease;
         }
 
+        /* 原始白底粉框樣式 */
         .grid-container {
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
@@ -50,22 +51,27 @@
         }
 
         .day-card {
-            background: white; border: 2px solid var(--primary-pink);
+            background: white; /* 原始白底 */
+            border: 2px solid var(--primary-pink); /* 粉框 */
             border-radius: 15px; padding: 12px 5px; text-align: center;
             cursor: pointer; transition: all 0.2s; position: relative;
+            color: var(--text-color);
         }
 
+        /* 點擊後變粉色樣式 */
         .day-card.completed {
-            background-color: var(--dark-pink); color: white; border-color: var(--dark-pink);
+            background-color: var(--dark-pink); /* 反粉色 */
+            color: white; 
+            border-color: var(--dark-pink);
         }
 
         .date-label {
             font-size: 9px; margin-top: 5px;
-            background: rgba(255,255,255,0.2); border-radius: 5px;
-            display: none; /* 預設隱藏 */
+            background: rgba(255,255,255,0.3); border-radius: 5px;
+            display: none;
         }
 
-        .day-card.completed .date-label { display: block; } /* 完成後才顯示 */
+        .day-card.completed .date-label { display: block; }
 
         .day-num { font-weight: bold; display: block; font-size: 16px; }
         .amount { font-size: 13px; opacity: 0.9; }
@@ -75,7 +81,7 @@
 
     <div class="header">
         <h1>🌸 365日儲蓄挑戰</h1>
-        <p>無痛存13萬我來啦～～～</p>
+        <p>每一筆紀錄，都是對未來的投資</p>
     </div>
 
     <div class="stats-container">
@@ -84,7 +90,7 @@
         <div style="font-size: 13px;">完成進度: <span id="percent">0%</span> (<span id="completedDays">0</span>/365)</div>
     </div>
 
-    <div class="grid-container" id="grid"></div>
+    <div id="grid" class="grid-container"></div>
 
     <script>
         const grid = document.getElementById('grid');
@@ -93,7 +99,6 @@
         const percentDisplay = document.getElementById('percent');
         const completedDaysDisplay = document.getElementById('completedDays');
         
-        // 確保讀取資料名稱一致
         let savedRecords = JSON.parse(localStorage.getItem('savings_pro_365')) || [];
 
         function init() {
@@ -132,9 +137,9 @@
                 element.classList.add('completed');
                 element.querySelector('.date-label').innerText = dateStr;
                 
-                // 檢查是否全滿觸發彩帶
+                // 檢查是否全滿 365 天
                 if (savedRecords.length === 365) {
-                    launchConfetti();
+                    launchCelebration();
                 }
             }
             
@@ -153,20 +158,22 @@
             completedDaysDisplay.innerText = count;
         }
 
-        function launchConfetti() {
+        function launchCelebration() {
+            // 彩帶特效
             confetti({
-                particleCount: 150, spread: 70, origin: { y: 0.6 },
-                colors: ['#ffb7c5', '#ffffff', '#ff69b4']
+                particleCount: 200, spread: 80, origin: { y: 0.6 },
+                colors: ['#ffb7c5', '#ffffff', '#ff69b4', '#ffd700']
             });
-            var duration = 3 * 1000;
-            var end = Date.now() + duration;
+            
+            let end = Date.now() + (3 * 1000);
             (function frame() {
-                confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ffb7c5', '#ff69b4'] });
-                confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ffb7c5', '#ff69b4'] });
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ffb7c5', '#ff69b4'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ffb7c5', '#ff69b4'] });
                 if (Date.now() < end) requestAnimationFrame(frame);
             }());
+
             setTimeout(() => {
-                alert("🎊 恭喜達成 365日儲蓄挑戰！\n\n你超棒！已經成功存下了 $133,590 元！🌸");
+                alert("🎊 恭喜達成 365日儲蓄挑戰！\n\n你已經成功存下了 $133,590 元！\n堅持到底的你真的太棒了！🌸");
             }, 1500);
         }
 
